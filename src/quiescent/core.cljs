@@ -56,6 +56,9 @@
                         [method (impl-ctor impl)]))))
       opts-map)))
 
+(defn with-key [value react-key]
+  (vary-meta value assoc ::key react-key))
+
 (defn component
   "Return a factory function that will create a ReactElement, using the provided function as the
   'render' method for a ReactJS component, which is created and instantiated behind-the-scenes.
@@ -72,6 +75,13 @@
      :keyfn - a single-argument function which is invoked at component construction time. It is
      passed the component's value, and returns the ReactJS key used to uniquely identify this
      component among its children.
+     The key may also be set as metadata of the components value at call time using the with-key
+     function, e.g. (MyComponent (with-key value key) ...), which will override :keyfn.
+     This has the advantage that neither every component that may be part of a sequence has to
+     implement a :keyfn function nor does the component have to know that fact and how to generate
+     a key which will not be needed by the component for any other purpose. The only restriction
+     for this to work is that the component's value has to be a datatype which may carry metadata
+     (implements the IWithMeta interface) like vectors, hashmaps, etc...
 
      :name - the name of the element, used for debugging purposes.
 
@@ -138,8 +148,9 @@
         (let [props (js-obj)]
           (set! (.-value props) value)
           (set! (.-constants props) constant-args)
-          (when-let [keyfn (:keyfn opts)]
-            (set! (.-key props) (keyfn value)))
+          (when-let [react-key (or (::key (meta value))
+                                   (when-let [keyfn (:keyfn opts)] (keyfn value)))]
+            (set! (.-key props) react-key))
           (.createElement js/React react-component props))))))
 
 (defn unmount
