@@ -147,7 +147,7 @@
       (fn [value & constant-args]
         (let [props (js-obj)
               [real-value react-key] (if (instance? ValueWithKey value)
-                                       [(.-value value) (.-key value)]
+                                       [(.-value value) (.-react-key value)]
                                        [value (when-let [keyfn (:keyfn opts)] (keyfn value))])]
           (set! (.-value props) real-value)
           (set! (.-constants props) constant-args)
